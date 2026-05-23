@@ -246,4 +246,40 @@ describe("POST /events/:id/purchase", () => {
     expect(Number(summary.sold_seats)).toBe(capacity);
     expect(Number(summary.duplicate_sold_seats)).toBe(0);
   });
+
+  it("only sells a seat once under parallel requests", async () => {
+    const requests = 20;
+
+    await resetEvent(pool, {
+      eventId: "test-same-seat-concurrent",
+      capacity: requests,
+      seatCount: 1,
+    });
+
+    const responses = await Promise.all(
+      Array.from({ length: requests }, (_unused, index) =>
+        request(app)
+          .post("/events/test-same-seat-concurrent/purchase")
+          .set("Idempotency-Key", `same-seat-${index + 1}`)
+          .send({
+            userId: `user-${index + 1}`,
+            seatId: "seat-1",
+          }),
+      ),
+    );
+
+    const successful = responses.filter((response) => response.status === 201);
+    const rejected = responses.filter(
+      (response) =>
+        response.status === 409 && response.body.error.code === "seat_sold",
+    );
+
+    expect(successful).toHaveLength(1);
+    expect(rejected).toHaveLength(requests - 1);
+
+    const summary = await getEventSummary(pool, "test-same-seat-concurrent");
+    expect(Number(summary.sold_count)).toBe(1);
+    expect(Number(summary.sold_seats)).toBe(1);
+    expect(Number(summary.duplicate_sold_seats)).toBe(0);
+  });
 });

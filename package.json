@@ -9,6 +9,7 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/src/index.js",
     "db:migrate": "tsx scripts/migrate.ts",
+    "db:seed": "tsx scripts/seed.ts",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

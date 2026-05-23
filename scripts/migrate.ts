@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { pool } from "../src/db.js";
+import { pool } from "../src/store/db.js";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const schemaPath = join(currentDir, "../sql/schema.sql");

@@ -15,6 +15,7 @@ Revised skeleton for the ticket counting service.
 ```bash
 npm install
 cp .env.example .env
+docker compose up -d postgres
 npm run db:migrate
 npm run dev
 ```
@@ -29,6 +30,21 @@ npm run build
 npm run typecheck
 npm test
 npm run db:migrate
+```
+
+## Structure
+
+```text
+src/
+  app.ts
+  routes/
+  services/
+  store/
+  middleware/
+tests/
+  health.test.ts
+sql/
+  schema.sql
 ```
 
 ## Current API

@@ -51,8 +51,8 @@ async function main(): Promise<void> {
 }
 
 function validateSeedConfig(): void {
-  if (!Number.isInteger(capacity) || capacity < 0 || capacity > 500) {
-    throw new Error("SEED_CAPACITY must be an integer between 0 and 500.");
+  if (!Number.isInteger(capacity) || capacity < 0) {
+    throw new Error("SEED_CAPACITY must be a non-negative integer.");
   }
 
   if (!Number.isInteger(seatCount) || seatCount < 0) {

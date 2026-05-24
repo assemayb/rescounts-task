@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS events (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  capacity INTEGER NOT NULL CHECK (capacity >= 0 AND capacity <= 500),
+  capacity INTEGER NOT NULL CHECK (capacity >= 0),
   sold_count INTEGER NOT NULL DEFAULT 0 CHECK (sold_count >= 0 AND sold_count <= capacity),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

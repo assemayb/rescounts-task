@@ -12,24 +12,44 @@ Revised skeleton for the ticket counting service.
 
 ## Setup
 
+Run the full app with Docker Compose:
+
 ```bash
-npm install
-cp .env.example .env
-docker compose up -d postgres
-npm run db:migrate
-npm run dev
+make up
 ```
 
-The API listens on `http://localhost:3000` by default.
+The Docker Compose app listens on `http://localhost:3000`.
+Postgres also creates a separate `rescounts_test` database for tests.
+
+If the database schema or init SQL changes, recreate the local database volume:
+
+```bash
+make clean
+make up
+```
+
+Seed the default event:
+
+```bash
+make seed
+```
+
+Run tests inside the app container:
+
+```bash
+make test
+make concurrency
+```
 
 ## Scripts
 
 ```bash
-npm run dev
-npm run build
-npm run typecheck
-npm test
-npm run db:migrate
+make build
+make typecheck
+make test
+make concurrency
+make migrate
+make seed
 ```
 
 ## Structure
@@ -43,14 +63,24 @@ src/
   middleware/
 tests/
   health.test.ts
+  purchase.test.ts
 sql/
   schema.sql
 ```
 
-## Current API
+## API
 
 ```http
 GET /health
 ```
 
-Returns basic service status while the domain model is rebuilt.
+```http
+POST /events/:id/purchase
+Idempotency-Key: unique-request-key
+Content-Type: application/json
+
+{
+  "userId": "user-1",
+  "seatId": "seat-1"
+}
+```

@@ -1,4 +1,16 @@
 services:
+  app:
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgres://rescounts:rescounts@postgres:5432/rescounts
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     image: postgres:16-alpine
     ports:
@@ -7,8 +19,15 @@ services:
       POSTGRES_USER: rescounts
       POSTGRES_PASSWORD: rescounts
       POSTGRES_DB: rescounts
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql:ro
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.template:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U rescounts -d rescounts"]
       interval: 3s
       timeout: 3s
       retries: 10
+
+volumes:
+  postgres_data:

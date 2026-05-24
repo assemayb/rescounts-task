@@ -1,8 +1,17 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { createApp } from "../src/app.js";
-import { pool } from "../src/store/db.js";
-import { getEventSummary, migrate, resetEvent } from "../tests/dbHelper.js";
+
+// default values for the test script
+const EVENT_ID = "concert-load-test";
+const REQUESTS = 200;
+const CAPACITY = 10;
+
+process.env.DATABASE_URL ??=
+  "postgres://rescounts:rescounts@localhost:5432/rescounts_test";
+
+const testDatabaseUrl = new URL(process.env.DATABASE_URL);
+testDatabaseUrl.pathname = "/rescounts_test";
+process.env.DATABASE_URL = testDatabaseUrl.toString();
 
 interface ScriptOptions {
   requests: number;
@@ -13,6 +22,12 @@ interface ScriptOptions {
 }
 
 const options = parseArgs(process.argv.slice(2));
+const [{ createApp }, { pool }, { getEventSummary, migrate, resetEvent }] =
+  await Promise.all([
+    import("../src/app.js"),
+    import("../src/store/db.js"),
+    import("../tests/dbHelper.js"),
+  ]);
 
 await migrate(pool);
 await resetEvent(pool, {
@@ -79,7 +94,11 @@ try {
     options.requests - options.capacity,
     "expected every non-successful request to be rejected with 409",
   );
-  assert.equal(unexpected.length, 0, "expected no unexpected response statuses");
+  assert.equal(
+    unexpected.length,
+    0,
+    "expected no unexpected response statuses",
+  );
   assert.equal(Number(summary.sold_count), options.capacity);
   assert.equal(Number(summary.sold_seats), options.capacity);
   assert.equal(Number(summary.duplicate_sold_seats), 0);
@@ -106,10 +125,11 @@ function parseArgs(args: string[]): ScriptOptions {
     }
   }
 
-  const requests = Number(values.get("requests") ?? 200);
-  const capacity = Number(values.get("capacity") ?? 10);
+  const requests = Number(values.get("requests") ?? REQUESTS);
+  const capacity = Number(values.get("capacity") ?? CAPACITY);
+  const eventId = values.get("event") ?? EVENT_ID;
   const seatCount = Number(values.get("seats") ?? requests);
-  const eventId = values.get("event") ?? "concert-load-test";
+
   const port = Number(values.get("port") ?? 3100);
 
   if (!Number.isInteger(requests) || requests <= 0) {
@@ -121,7 +141,9 @@ function parseArgs(args: string[]): ScriptOptions {
   }
 
   if (!Number.isInteger(seatCount) || seatCount < requests) {
-    throw new Error("--seats must be an integer greater than or equal to requests");
+    throw new Error(
+      "--seats must be an integer greater than or equal to requests",
+    );
   }
 
   if (!Number.isInteger(port) || port <= 0) {

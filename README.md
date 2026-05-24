@@ -1,6 +1,6 @@
 # Rescounts Task
 
-Revised skeleton for the ticket counting service.
+Ticket purchase service focused on safe concurrent sales and idempotent retries.
 
 ## Stack
 
@@ -10,7 +10,7 @@ Revised skeleton for the ticket counting service.
 - PostgreSQL
 - Vitest
 
-## Setup
+## Quick Start
 
 Run the full app with Docker Compose:
 
@@ -18,8 +18,20 @@ Run the full app with Docker Compose:
 make up
 ```
 
-The Docker Compose app listens on `http://localhost:3000`.
+The app listens on `http://localhost:3000`.
 Postgres also creates a separate `rescounts_test` database for tests.
+
+Seed the default event:
+
+```bash
+make seed
+```
+
+The seed script creates:
+
+- Event: `concert-1`
+- Capacity: `500`
+- Seats: `seat-1` to `seat-500`
 
 If the database schema or init SQL changes, recreate the local database volume:
 
@@ -28,13 +40,26 @@ make clean
 make up
 ```
 
-Seed the default event:
+## Try the API
+
+Health check:
 
 ```bash
-make seed
+curl http://localhost:3000/health
 ```
 
-Run tests inside the app container:
+Purchase a ticket from the seeded event:
+
+```bash
+curl -X POST http://localhost:3000/events/concert-1/purchase \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: purchase-1" \
+  -d '{"userId":"user-1","seatId":"seat-1"}'
+```
+
+## Validation
+
+Run the checks inside the app container:
 
 ```bash
 make test
@@ -44,13 +69,15 @@ make concurrency
 ## Scripts
 
 ```bash
-make build
-make typecheck
 make test
 make concurrency
 make migrate
 make seed
 ```
+
+## Design Notes
+
+See `DESIGN.md` for the concurrency, idempotency, scaling, and tradeoff decisions behind the implementation.
 
 ## Structure
 
